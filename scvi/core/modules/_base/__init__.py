@@ -183,21 +183,11 @@ class FCLayers(nn.Module):
             assert not (
                 n_cat and cat is None
             ), "cat not provided while n_cat != 0 in init. params."
-            if n_cat > 1:  # n_cat = 1 will be ignored - no additional information
-                if cat.size(1) != n_cat:
-                    one_hot_cat = one_hot(cat, n_cat)
-                else:
-                    one_hot_cat = cat  # cat has already been one_hot encoded
-                one_hot_cat_list += [
-                    one_hot_cat
-                ]  # assemble categorical params into tensor
-        if len(one_hot_cat_list) > 0:
-            cat_param_tensor_list = []
-            # n_cat = 1 will be ignored
-            for n_cat, par in zip(self.n_cat_list, self.cat_param_list):
-                if n_cat > 1:
-                    # n_hidden by n_cat
-                    cat_param_tensor_list.append(par)
+            if cat.size(1) != n_cat:
+                one_hot_cat = one_hot(cat, n_cat)
+            else:
+                one_hot_cat = cat  # cat has already been one_hot encoded
+            one_hot_cat_list += [one_hot_cat]  # assemble categorical params into tensor
 
         for i, layers in enumerate(self.fc_layers):
             for layer in layers:
@@ -225,10 +215,13 @@ class FCLayers(nn.Module):
                             # covariates with one category ignored
                             # one_hot_cat_tensor has same shape as x
                             cat_output = torch.zeros_like(x)
-                            for oh, cp in zip(
-                                one_hot_cat_list_layer, cat_param_tensor_list
+                            for n_cat, oh, cp in zip(
+                                self.n_cat_list,
+                                one_hot_cat_list_layer,
+                                self.cat_param_list,
                             ):
-                                cat_output += nn.functional.linear(oh, cp)
+                                if n_cat > 1:
+                                    cat_output += nn.functional.linear(oh, cp)
                         else:
                             cat_output = 0
                         x = x + cat_output
