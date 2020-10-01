@@ -172,12 +172,32 @@ class FCLayers(nn.Module):
         cat_list
             list of category membership(s) for this sample
         """
-        one_hot_cat_list = _make_one_hot_cat_list(self.n_cat_list, cat_list)
+        assert len(self.n_cat_list) <= len(
+            cat_list
+        ), "number of categorical args provided doesn't match init. params."
+        one_hot_cat_list = []  # for generality in this list many indices useless.
+        # n_cat = 1 will be ignored
+        for n_cat, cat in zip(self.n_cat_list, cat_list):
+            assert not (
+                n_cat and cat is None
+            ), "cat not provided while n_cat != 0 in init. params."
+            if n_cat > 1:  # n_cat = 1 will be ignored - no additional information
+                if cat.size(1) != n_cat:
+                    one_hot_cat = one_hot(cat, n_cat)
+                else:
+                    one_hot_cat = cat  # cat has already been one_hot encoded
+                one_hot_cat_list += [one_hot_cat]
+
         # assemble categorical params into tensor
         if len(one_hot_cat_list) > 0:
-            cat_param_tensor = _make_cat_param_tensor(
-                self.n_cat_list, self.cat_param_list
-            )
+            cat_tensor_list = []
+            # n_cat = 1 will be ignored
+            for n_cat, plist in zip(self.n_cat_list, self.cat_param_list):
+                if n_cat > 1:
+                    # n_hidden by n_cat
+                    for i in range(n_cat):
+                        cat_tensor_list.append(plist[i])
+            cat_param_tensor = torch.cat(cat_tensor_list, dim=1)
 
         for i, layers in enumerate(self.fc_layers):
             for layer in layers:
