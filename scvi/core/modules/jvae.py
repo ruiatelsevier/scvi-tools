@@ -18,7 +18,7 @@ from scvi.core.distributions import (
 from ._base import Encoder, MultiEncoder, MultiDecoder
 from .utils import one_hot
 
-torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.benchmark = True
 
 
 class JVAE(nn.Module):

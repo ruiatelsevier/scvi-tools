@@ -12,7 +12,7 @@ from scvi.core.distributions import NegativeBinomial, ZeroInflatedNegativeBinomi
 from .utils import one_hot
 from .vae import VAE
 
-torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.benchmark = True
 
 
 class AutoZIVAE(VAE):
