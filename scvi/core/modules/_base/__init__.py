@@ -49,16 +49,22 @@ def _make_one_hot_cat_list(n_cat_list: List[int], cat_list: List[torch.Tensor]):
 
 def _make_cat_param_tensor(n_cat_list, cat_param_list) -> torch.Tensor:
     """Concatenate weight matrix for categoricals"""
-    cat_tensor_list = []
+    cat_param_tensor_list = []
     # n_cat = 1 will be ignored
     for n_cat, plist in zip(n_cat_list, cat_param_list):
+        categories = []
         if n_cat > 1:
             # n_hidden by n_cat
-            for i in range(n_cat):
-                cat_tensor_list.append(plist[i])
-    cat_param_tensor = torch.cat(cat_tensor_list, dim=1)
+            if len(plist) > 1:
+                for i in range(len(plist)):
+                    categories.append(plist[i])
+                categories = torch.cat(categories, dim=1)
+            else:
+                categories = plist[0]
 
-    return cat_param_tensor
+        cat_param_tensor_list.append(categories)
+
+    return cat_param_tensor_list
 
 
 class FCLayers(nn.Module):
@@ -117,9 +123,7 @@ class FCLayers(nn.Module):
         if sum(self.n_cat_list) > 0:
             self.cat_param_list = nn.ModuleList(
                 [
-                    ParameterList(
-                        [Parameter(torch.randn((n_hidden[0], 1))) for _ in range(n_cat)]
-                    )
+                    ParameterList([Parameter(torch.randn((n_hidden[0], n_cat)))])
                     for n_cat in n_cat_list
                 ]
             )
@@ -175,7 +179,7 @@ class FCLayers(nn.Module):
         one_hot_cat_list = _make_one_hot_cat_list(self.n_cat_list, cat_list)
         # assemble categorical params into tensor
         if len(one_hot_cat_list) > 0:
-            cat_param_tensor = _make_cat_param_tensor(
+            cat_param_tensor_list = _make_cat_param_tensor(
                 self.n_cat_list, self.cat_param_list
             )
 
@@ -191,6 +195,7 @@ class FCLayers(nn.Module):
                             x = layer(x)
                     elif isinstance(layer, nn.Linear):
                         x_size = x.size()
+                        x = layer(x)
                         if self.inject_into_layer(i):
                             if len(x_size) == 3:
                                 one_hot_cat_list_layer = [
@@ -203,14 +208,13 @@ class FCLayers(nn.Module):
                                 one_hot_cat_list_layer = one_hot_cat_list
                             # covariates with one category ignored
                             # one_hot_cat_tensor has same shape as x
-                            cat_input = torch.cat(one_hot_cat_list_layer, dim=-1)
-                            # cat_param_tensor.shape == [n_hidden, sum(n_cats)]
-                            cat_output = nn.functional.linear(
-                                cat_input, cat_param_tensor
-                            )
+                            cat_output = torch.zeros_like(x)
+                            for oh, cp in zip(
+                                one_hot_cat_list_layer, cat_param_tensor_list
+                            ):
+                                cat_output += nn.functional.linear(oh, cp)
                         else:
                             cat_output = 0
-                        x = layer(x)
                         x = x + cat_output
                     else:
                         x = layer(x)
