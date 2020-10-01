@@ -18,7 +18,7 @@ from scvi.core.distributions import (
 from ._base import DecoderSCVI, Encoder, LinearDecoderSCVI
 from .utils import one_hot
 
-torch.backends.cudnn.benchmark = True
+torch.backends.cudnn.benchmark = False
 
 
 # VAE model
