@@ -189,6 +189,17 @@ class FCLayers(nn.Module):
                 one_hot_cat = cat  # cat has already been one_hot encoded
             one_hot_cat_list += [one_hot_cat]  # assemble categorical params into tensor
 
+        params = []
+        if self.cat_param_list is not None:
+            for n_cat, cp in zip(
+                self.n_cat_list,
+                self.cat_param_list,
+            ):
+                if n_cat > 1:
+                    params.append(cp)
+
+            cat_param_tensor = torch.cat(params, dim=1)
+
         for i, layers in enumerate(self.fc_layers):
             for layer in layers:
                 if layer is not None:
@@ -200,31 +211,22 @@ class FCLayers(nn.Module):
                         else:
                             x = layer(x)
                     elif isinstance(layer, nn.Linear):
-                        x_size = x.size()
-                        x = layer(x)
                         if self.inject_into_layer(i):
-                            if len(x_size) == 3:
+                            if x.dim() == 3:
                                 one_hot_cat_list_layer = [
                                     o.unsqueeze(0).expand(
-                                        (x_size[0], o.size(0), o.size(1))
+                                        (x.size(0), o.size(0), o.size(1))
                                     )
                                     for o in one_hot_cat_list
                                 ]
                             else:
                                 one_hot_cat_list_layer = one_hot_cat_list
-                            # covariates with one category ignored
-                            # one_hot_cat_tensor has same shape as x
-                            cat_output = torch.zeros_like(x)
-                            for n_cat, oh, cp in zip(
-                                self.n_cat_list,
-                                one_hot_cat_list_layer,
-                                self.cat_param_list,
-                            ):
-                                if n_cat > 1:
-                                    cat_output += nn.functional.linear(oh, cp)
+
+                            x = torch.cat((x, *one_hot_cat_list_layer), dim=-1)
+                            weight = torch.cat((layer.weight, cat_param_tensor), dim=1)
                         else:
-                            cat_output = 0
-                        x = x + cat_output
+                            weight = layer.weight
+                        x = nn.functional.linear(x, weight, layer.bias)
                     else:
                         x = layer(x)
         return x
