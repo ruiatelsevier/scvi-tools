@@ -121,12 +121,10 @@ class FCLayers(nn.Module):
         else:
             self.n_cat_list = []
         if sum(self.n_cat_list) > 0:
-            self.cat_param_list = nn.ModuleList(
-                [
-                    ParameterList([Parameter(torch.randn((n_hidden[0], n_cat)))])
-                    for n_cat in n_cat_list
-                ]
+            self.cat_param_list = ParameterList(
+                [Parameter(torch.randn((n_hidden[0], n_cat))) for n_cat in n_cat_list]
             )
+
         else:
             self.cat_param_list = None
 
@@ -196,18 +194,10 @@ class FCLayers(nn.Module):
         if len(one_hot_cat_list) > 0:
             cat_param_tensor_list = []
             # n_cat = 1 will be ignored
-            for n_cat, plist in zip(self.n_cat_list, self.cat_param_list):
-                categories = []
+            for n_cat, par in zip(self.n_cat_list, self.cat_param_list):
                 if n_cat > 1:
                     # n_hidden by n_cat
-                    if len(plist) > 1:
-                        for i in range(len(plist)):
-                            categories.append(plist[i])
-                        categories = torch.cat(categories, dim=1)
-                    else:
-                        categories = plist[0]
-
-                cat_param_tensor_list.append(categories)
+                    cat_param_tensor_list.append(par)
 
         for i, layers in enumerate(self.fc_layers):
             for layer in layers:
