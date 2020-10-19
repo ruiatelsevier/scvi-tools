@@ -58,6 +58,7 @@ class FCLayers(nn.Module):
         n_hidden: int = 128,
         dropout_rate: float = 0.1,
         use_batch_norm: bool = True,
+        use_layer_norm: bool = True,
         use_activation: bool = True,
         bias: bool = True,
         inject_covariates: bool = True,
@@ -89,6 +90,7 @@ class FCLayers(nn.Module):
                             nn.BatchNorm1d(n_out, momentum=0.01, eps=0.001)
                             if use_batch_norm
                             else None,
+                            nn.LayerNorm(n_out) if use_layer_norm else None,
                             activation_fn() if use_activation else None,
                             nn.Dropout(p=dropout_rate) if dropout_rate > 0 else None,
                         ),
@@ -691,6 +693,7 @@ class DecoderTOTALVI(nn.Module):
             n_layers=1,
             use_activation=False,
             use_batch_norm=False,
+            use_layer_norm=False,
             dropout_rate=0,
         )
 
@@ -712,6 +715,7 @@ class DecoderTOTALVI(nn.Module):
             n_layers=1,
             use_activation=False,
             use_batch_norm=False,
+            use_layer_norm=False,
             dropout_rate=0,
         )
         self.py_back_mean_log_beta = FCLayers(
@@ -721,6 +725,7 @@ class DecoderTOTALVI(nn.Module):
             n_layers=1,
             use_activation=False,
             use_batch_norm=False,
+            use_layer_norm=False,
             dropout_rate=0,
         )
 
@@ -742,6 +747,7 @@ class DecoderTOTALVI(nn.Module):
             n_layers=1,
             use_activation=True,
             use_batch_norm=False,
+            use_layer_norm=False,
             dropout_rate=0,
             activation_fn=nn.ReLU,
         )
@@ -763,6 +769,7 @@ class DecoderTOTALVI(nn.Module):
             n_layers=1,
             use_activation=False,
             use_batch_norm=False,
+            use_layer_norm=False,
             dropout_rate=0,
         )
 
@@ -773,6 +780,7 @@ class DecoderTOTALVI(nn.Module):
             n_layers=1,
             use_activation=False,
             use_batch_norm=False,
+            use_layer_norm=False,
             dropout_rate=0,
         )
 
