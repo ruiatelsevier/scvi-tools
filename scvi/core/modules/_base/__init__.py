@@ -62,7 +62,7 @@ class FCLayers(nn.Module):
         use_activation: bool = True,
         bias: bool = True,
         inject_covariates: bool = True,
-        activation_fn: nn.Module = nn.SELU,
+        activation_fn: nn.Module = nn.LeakyReLU,
     ):
         super().__init__()
         self.inject_covariates = inject_covariates
