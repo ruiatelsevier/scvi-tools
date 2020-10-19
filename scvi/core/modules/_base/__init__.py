@@ -901,8 +901,8 @@ class EncoderTOTALVI(nn.Module):
             dropout_rate=dropout_rate,
             use_batch_norm=use_batch_norm,
         )
-        self.z_mean_encoder = nn.Linear(n_hidden, n_output)
-        self.z_var_encoder = nn.Linear(n_hidden, n_output)
+        self.z_mean_encoder = nn.Sequential(nn.Linear(n_hidden, n_output), nn.Tanh())
+        self.z_var_encoder = nn.Sequential(nn.Linear(n_hidden, n_output), nn.ReLU6())
 
         self.l_gene_encoder = FCLayers(
             n_in=n_input,
@@ -958,8 +958,8 @@ class EncoderTOTALVI(nn.Module):
         """
         # Parameters for latent distribution
         q = self.encoder(data, *cat_list)
-        qz_m = self.z_mean_encoder(q)
-        qz_v = torch.exp(self.z_var_encoder(q)) + 1e-4
+        qz_m = 5 * self.z_mean_encoder(q)
+        qz_v = self.z_var_encoder(q) + 1e-4
         z, untran_z = self.reparameterize_transformation(qz_m, qz_v)
 
         ql_gene = self.l_gene_encoder(data, *cat_list)
