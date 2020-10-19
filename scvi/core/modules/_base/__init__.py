@@ -61,7 +61,7 @@ class FCLayers(nn.Module):
         use_activation: bool = True,
         bias: bool = True,
         inject_covariates: bool = True,
-        activation_fn: nn.Module = nn.ReLU,
+        activation_fn: nn.Module = nn.ELU,
     ):
         super().__init__()
         self.inject_covariates = inject_covariates
@@ -743,6 +743,7 @@ class DecoderTOTALVI(nn.Module):
             use_activation=True,
             use_batch_norm=False,
             dropout_rate=0,
+            activation_fn=nn.ReLU,
         )
 
         # dropout (mixture component for proteins, ZI probability for genes)
