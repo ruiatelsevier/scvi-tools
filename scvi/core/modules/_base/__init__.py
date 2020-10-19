@@ -57,12 +57,12 @@ class FCLayers(nn.Module):
         n_layers: int = 1,
         n_hidden: int = 128,
         dropout_rate: float = 0.1,
-        use_batch_norm: bool = True,
+        use_batch_norm: bool = False,
         use_layer_norm: bool = True,
         use_activation: bool = True,
         bias: bool = True,
         inject_covariates: bool = True,
-        activation_fn: nn.Module = nn.SELU,
+        activation_fn: nn.Module = nn.LeakyReLU,
     ):
         super().__init__()
         self.inject_covariates = inject_covariates
