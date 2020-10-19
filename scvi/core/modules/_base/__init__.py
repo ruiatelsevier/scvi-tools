@@ -61,7 +61,7 @@ class FCLayers(nn.Module):
         use_activation: bool = True,
         bias: bool = True,
         inject_covariates: bool = True,
-        activation_fn: nn.Module = nn.ELU,
+        activation_fn: nn.Module = nn.SELU,
     ):
         super().__init__()
         self.inject_covariates = inject_covariates
@@ -959,7 +959,7 @@ class EncoderTOTALVI(nn.Module):
         """
         # Parameters for latent distribution
         q = self.encoder(data, *cat_list)
-        qz_m = 4 * torch.tanh(0.15 * self.z_mean_encoder(q))
+        qz_m = self.z_mean_encoder(q)
         qz_v = 3 * self.z_var_encoder(q) + 1e-4
         z, untran_z = self.reparameterize_transformation(qz_m, qz_v)
 
