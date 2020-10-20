@@ -658,6 +658,8 @@ class DecoderTOTALVI(nn.Module):
         included using a one-hot encoding
     use_batch_norm
         Whether to use batch norm in layers
+    use_softmax
+        Whether to use softmax for px_scale
     """
 
     def __init__(
@@ -670,10 +672,12 @@ class DecoderTOTALVI(nn.Module):
         n_hidden: int = 256,
         dropout_rate: float = 0,
         use_batch_norm: float = True,
+        use_softmax: bool = True,
     ):
         super().__init__()
         self.n_output_genes = n_output_genes
         self.n_output_proteins = n_output_proteins
+        self.use_softmax = use_softmax
 
         self.px_decoder = FCLayers(
             n_in=n_input,
@@ -827,7 +831,11 @@ class DecoderTOTALVI(nn.Module):
 
         px = self.px_decoder(z, *cat_list)
         px_cat_z = torch.cat([px, z], dim=-1)
-        px_["scale"] = nn.Softmax(dim=-1)(self.px_scale_decoder(px_cat_z, *cat_list))
+        unnorm_px_scale = self.px_scale_decoder(px_cat_z, *cat_list)
+        if self.use_softmax:
+            px_["scale"] = nn.Softmax(dim=-1)(unnorm_px_scale)
+        else:
+            px_["scale"] = torch.exp(self.px_scale_decoder(px_cat_z, *cat_list))
         px_["rate"] = library_gene * px_["scale"]
 
         py_back = self.py_back_decoder(z, *cat_list)
