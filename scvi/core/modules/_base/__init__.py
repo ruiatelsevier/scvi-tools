@@ -90,7 +90,9 @@ class FCLayers(nn.Module):
                             nn.BatchNorm1d(n_out, momentum=0.01, eps=0.001)
                             if use_batch_norm
                             else None,
-                            nn.LayerNorm(n_out) if use_layer_norm else None,
+                            nn.LayerNorm(n_out, elementwise_affine=False)
+                            if use_layer_norm
+                            else None,
                             activation_fn() if use_activation else None,
                             nn.Dropout(p=dropout_rate) if dropout_rate > 0 else None,
                         ),
